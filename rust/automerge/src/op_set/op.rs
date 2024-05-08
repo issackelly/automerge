@@ -283,10 +283,15 @@ impl<'a> Op<'a> {
         if id == types::ROOT {
             ExId::Root
         } else {
+            let (actor,  i) = match self.osd.actors.safe_get(id.actor()) {
+                Some(x) => (x, id.actor()),
+                None => (&self.osd.actors[0], 0 as usize)
+            };
+
             ExId::Id(
                 id.counter(),
-                self.osd.actors.cache[id.actor()].clone(),
-                id.actor(),
+                actor.clone(),
+                i,
             )
         }
     }
