@@ -36,7 +36,7 @@ pub(crate) enum Error {
 }
 
 pub(crate) struct ChangeCollector<'a> {
-    changes_by_actor: HashMap<usize, Vec<PartialChange<'a>>, FxBuildHasher>,
+    pub changes_by_actor: HashMap<usize, Vec<PartialChange<'a>>, FxBuildHasher>,
 }
 
 pub(crate) struct CollectedChanges<'a> {
@@ -82,7 +82,7 @@ impl<'a> ChangeCollector<'a> {
     }
 
     #[instrument(skip(self))]
-    pub(crate) fn collect(&mut self, opid: OpId, idx: OpIdx) -> Result<(), Error> {
+    pub(crate) fn collect(&mut self, opid: OpId, idx: OpIdx) -> Result<(), Error> { 
         let actor_changes = self
             .changes_by_actor
             .get_mut(&opid.actor())
@@ -138,7 +138,7 @@ impl<'a> ChangeCollector<'a> {
 }
 
 #[derive(Debug)]
-struct PartialChange<'a> {
+pub struct PartialChange<'a> {
     index: usize,
     deps: Vec<u64>,
     actor: usize,

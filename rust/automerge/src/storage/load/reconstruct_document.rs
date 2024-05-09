@@ -1,7 +1,10 @@
 use super::change_collector::ChangeCollector;
 use std::collections::{BTreeSet, HashMap};
 
+use crate::automerge::Actor;
+use crate::indexed_cache::IndexedCache;
 use crate::storage::document::ReadDocOpError;
+use crate::ActorId;
 use crate::{
     change::Change,
     columnar::Key as DocOpKey,
@@ -142,6 +145,14 @@ pub(crate) fn reconstruct_opset<'a>(
         }
 
         state.ops_collecter.push(idx);
+
+        // Insert a missing one...
+        match state.change_collector.changes_by_actor.get(&opid.actor()) {
+            Some(x) => {},
+            None => {
+                state.change_collector.changes_by_actor.insert(opid.actor(), Default::default());}
+        }
+
         state.change_collector.collect(opid, idx)?;
 
         state.last_key = Some(key);
@@ -253,7 +264,16 @@ fn import_op(osd: &mut OpSetData, op: DocOp) -> Result<(OpBuilder, OpIds), Error
     for opid in &op.succ {
         if osd.actors.safe_get(opid.actor()).is_none() {
             tracing::error!(?opid, "missing actor");
-            return Err(Error::MissingActor);
+            while (osd.actors.len() - 1) < opid.actor() {
+                let aid = ActorId::random();
+                osd.actors.cache.insert(osd.actors.len(), aid.clone());
+                osd.actors.lookup.insert(aid, osd.actors.len() - 1);
+            }
+            println!("Inserted some actors!");
+            //return Err(Error::MissingActor);
+            if osd.actors.safe_get(opid.actor()).is_none() {
+                panic!("Failed to insert I guess");
+            }
         }
     }
     let action = OpType::from_action_and_value(op.action, op.value, op.mark_name, op.expand);

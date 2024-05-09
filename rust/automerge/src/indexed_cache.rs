@@ -6,7 +6,7 @@ use std::ops::Index;
 #[derive(Debug, Clone)]
 pub(crate) struct IndexedCache<T> {
     pub(crate) cache: Vec<T>,
-    lookup: HashMap<T, usize>,
+    pub(crate) lookup: HashMap<T, usize>,
 }
 
 impl<T> PartialEq for IndexedCache<T>
@@ -51,17 +51,13 @@ where
 
     // Temporairly override `get` to unwrap safe get
     pub(crate) fn get(&self, index: usize) -> &T {
-        //&self.cache[index]
-        self.safe_get(index).unwrap()
+        &self.cache[index]
     }
 
     // Temporairly override `safe_get` to use the first if we have an off-by-one error
     // in this case we can't trust any of the actor IDs but it should still not fail.
     pub(crate) fn safe_get(&self, index: usize) -> Option<&T> {
-        match self.cache.get(index) {
-            Some(i) => Some(i),
-            None => self.cache.get(0),
-        }
+        self.cache.get(index)
     }
 
     #[allow(dead_code)]

@@ -24,6 +24,7 @@ struct Opts {
 enum ExportFormat {
     Json,
     Toml,
+    Automerge,
 }
 
 #[derive(Copy, Clone, Default, Debug)]
@@ -71,6 +72,7 @@ impl FromStr for ExportFormat {
         match input {
             "json" => Ok(ExportFormat::Json),
             "toml" => Ok(ExportFormat::Toml),
+            "automerge" => Ok(ExportFormat::Automerge),
             _ => Err(anyhow!("Invalid export format: {}", input)),
         }
     }
@@ -181,7 +183,16 @@ fn main() -> Result<()> {
                         skip_verifying_heads,
                         std::io::stdout().is_terminal(),
                     )
-                }
+                },
+                ExportFormat::Automerge => {
+                    let mut in_buffer = open_file_or_stdin(changes_file)?;
+                    export::export_automerge(
+                        &mut in_buffer,
+                        output,
+                        skip_verifying_heads,
+                        std::io::stdout().is_terminal(),
+                    )
+                },
                 ExportFormat::Toml => unimplemented!(),
             }
         }
@@ -196,6 +207,7 @@ fn main() -> Result<()> {
                 import::import_json(&mut in_buffer, &mut out_buffer)
             }
             ExportFormat::Toml => unimplemented!(),
+            ExportFormat::Automerge => unimplemented!(),
         },
         Command::Examine {
             input_file,
